@@ -1,20 +1,620 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTURE-FAST</title>
-    <style>
-        body { font-family: Arial; background: #f4f4f4; text-align: center; padding: 50px; }
-        .box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
-        h1 { color: #007bff; }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Invoice Generator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0efe9;color:#1a1a18;min-height:100vh}
+.app-shell{display:grid;grid-template-columns:340px 1fr;min-height:100vh}
+.sidebar{background:#f8f7f2;border-right:1px solid #e0dfd6;padding:1.5rem;overflow-y:auto;position:sticky;top:0;height:100vh}
+.main{padding:1.5rem;overflow-y:auto}
+.app-title{font-size:15px;font-weight:500;margin-bottom:1.25rem;color:#444;letter-spacing:-.01em}
+.tab-bar{display:flex;gap:4px;margin-bottom:1.25rem;flex-wrap:wrap}
+.tab{font-size:12px;padding:5px 11px;border-radius:7px;border:1px solid transparent;cursor:pointer;color:#666;background:none;transition:all .15s}
+.tab:hover{background:#eee}
+.tab.active{background:#fff;border-color:#ddd;color:#111;font-weight:500}
+.section{margin-bottom:1.25rem}
+.section-title{font-size:11px;font-weight:500;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem}
+label{font-size:13px;color:#555;display:block;margin-bottom:3px}
+input,select,textarea{width:100%;font-size:13px;padding:7px 10px;border:1px solid #ddd;border-radius:7px;background:#fff;color:#111;outline:none;transition:border-color .15s;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:#888}
+textarea{resize:vertical;min-height:56px}
+.field{margin-bottom:.65rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:7px 14px;border-radius:7px;border:1px solid #ccc;background:#fff;color:#111;cursor:pointer;transition:all .15s;font-family:inherit}
+.btn:hover{background:#f5f5f0}
+.btn-primary{background:#111;color:#fff;border-color:#111}
+.btn-primary:hover{background:#333}
+.btn-sm{font-size:12px;padding:4px 10px}
+.btn-danger{color:#A32D2D;border-color:#f5c5c5}
+.btn-danger:hover{background:#fff0f0}
+.items-table{width:100%;border-collapse:collapse;margin-bottom:.75rem}
+.items-table th{font-size:11px;font-weight:500;color:#999;text-align:left;padding:4px;border-bottom:1px solid #e5e5e5}
+.items-table td{padding:3px;vertical-align:middle}
+.items-table input{padding:4px 6px;font-size:12px}
+.color-opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s}
+.color-dot.selected{border-color:#111;transform:scale(1.15)}
+.upload-zone{border:1.5px dashed #ccc;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;transition:background .15s;margin-bottom:.75rem;background:#fff}
+.upload-zone:hover{background:#fafaf8}
+.upload-zone p{font-size:12px;color:#999;margin-top:4px}
+.upload-zone svg{opacity:.4}
+.logo-preview-wrap{position:relative;display:inline-block}
+.logo-preview-wrap img{max-height:60px;max-width:180px;border-radius:4px;display:block}
+.remove-logo{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;background:#111;color:#fff;font-size:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.lh-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:.75rem}
+.lh-opt{border:1px solid #ddd;border-radius:8px;padding:8px;cursor:pointer;font-size:12px;text-align:center;transition:all .15s;color:#666;background:#fff}
+.lh-opt:hover{background:#f8f8f8}
+.lh-opt.selected{border-color:#111;color:#111;font-weight:500}
+.lh-preview{width:100%;height:32px;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.invoice-paper{background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;max-width:740px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+@media print{
+  body{background:#fff}
+  .app-shell{display:block}
+  .sidebar,.top-bar{display:none!important}
+  .main{padding:0}
+  .invoice-paper{border:none;box-shadow:none;border-radius:0;max-width:100%}
+  @page{margin:1cm;size:A4}
+}
+</style>
 </head>
 <body>
-    <div class="box">
-        <h1>FACTURE-FAST</h1>
-        <p>مرحبا بيك فـ البرنامج ديال الفواتير السريع</p>
-        <button>إنشاء فاتورة جديدة</button>
+
+<div class="app-shell">
+  <div class="sidebar" id="sidebar">
+    <div class="app-title">Invoice Generator</div>
+
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('logo',this)">Logo</div>
+      <div class="tab" onclick="switchTab('company',this)">Company</div>
+      <div class="tab" onclick="switchTab('client',this)">Client</div>
+      <div class="tab" onclick="switchTab('items',this)">Items</div>
+      <div class="tab" onclick="switchTab('style',this)">Style</div>
     </div>
+
+    <!-- LOGO TAB -->
+    <div id="tab-logo">
+      <div class="section">
+        <div class="section-title">Company logo</div>
+        <div id="upload-zone" class="upload-zone" onclick="document.getElementById('logo-input').click()">
+          <div id="logo-display">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="margin:0 auto 4px;display:block"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity=".5"/></svg>
+            <p>Click to upload your logo</p>
+            <p style="font-size:11px;margin-top:2px">PNG, JPG, SVG — max 400×120px recommended</p>
+          </div>
+        </div>
+        <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="handleLogo(this)"/>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Letterhead layout</div>
+        <div class="lh-opts">
+          <div class="lh-opt selected" data-lh="classic" onclick="selectLH('classic',this)">
+            <div class="lh-preview" style="background:#f5f5f0;justify-content:space-between;padding:0 6px">
+              <div style="width:28px;height:12px;background:#ccc;border-radius:2px"></div>
+              <div style="width:16px;height:6px;background:#ddd;border-radius:1px"></div>
+            </div>
+            Classic
+          </div>
+          <div class="lh-opt" data-lh="centered" onclick="selectLH('centered',this)">
+            <div class="lh-preview" style="background:#f5f5f0;flex-direction:column;gap:3px">
+              <div style="width:28px;height:8px;background:#ccc;border-radius:2px"></div>
+              <div style="width:16px;height:4px;background:#ddd;border-radius:1px"></div>
+            </div>
+            Centered
+          </div>
+          <div class="lh-opt" data-lh="banner" onclick="selectLH('banner',this)">
+            <div class="lh-preview" id="lh-prev-banner" style="justify-content:space-between;padding:0 6px">
+              <div style="width:28px;height:10px;background:rgba(255,255,255,.35);border-radius:2px"></div>
+              <div style="width:16px;height:8px;background:rgba(255,255,255,.2);border-radius:1px"></div>
+            </div>
+            Banner
+          </div>
+          <div class="lh-opt" data-lh="sidebar" onclick="selectLH('sidebar',this)">
+            <div class="lh-preview" style="background:#f5f5f0;align-items:stretch;padding:0">
+              <div id="lh-prev-sidebar" style="width:8px;border-radius:2px 0 0 2px"></div>
+              <div style="flex:1;display:flex;align-items:center;padding:0 6px"><div style="width:20px;height:8px;background:#ccc;border-radius:1px"></div></div>
+            </div>
+            Sidebar
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Tagline / slogan</div>
+        <input id="c-tagline" oninput="render()" placeholder="Your slogan or website" value="Solutions digitales sur mesure"/>
+      </div>
+    </div>
+
+    <!-- COMPANY TAB -->
+    <div id="tab-company" style="display:none">
+      <div class="section">
+        <div class="section-title">Your company</div>
+        <div class="field"><label>Company name</label><input id="c-name" oninput="render()" value="Acme Corp S.A."/></div>
+        <div class="field"><label>Address</label><textarea id="c-addr" oninput="render()">23 Boulevard Hassan II
+Casablanca 20000, Maroc</textarea></div>
+        <div class="field"><label>ICE / Registration no.</label><input id="c-ice" oninput="render()" value="001234567000012"/></div>
+        <div class="row2">
+          <div class="field"><label>Email</label><input id="c-email" oninput="render()" value="contact@acme.ma"/></div>
+          <div class="field"><label>Phone</label><input id="c-phone" oninput="render()" value="+212 6 00 00 00 00"/></div>
+        </div>
+        <div class="field"><label>Website</label><input id="c-web" oninput="render()" value="www.acme.ma"/></div>
+        <div class="field"><label>Bank / IBAN</label><input id="c-bank" oninput="render()" value="MA64 0111 2345 6789 0000 0001"/></div>
+      </div>
+    </div>
+
+    <!-- CLIENT TAB -->
+    <div id="tab-client" style="display:none">
+      <div class="section">
+        <div class="section-title">Bill to</div>
+        <div class="field"><label>Client company</label><input id="cl-name" oninput="render()" value="Globex International"/></div>
+        <div class="field"><label>Contact name</label><input id="cl-contact" oninput="render()" value="M. Khalid Benali"/></div>
+        <div class="field"><label>Address</label><textarea id="cl-addr" oninput="render()">45 Rue Ibn Tachfin
+Rabat 10000, Maroc</textarea></div>
+        <div class="row2">
+          <div class="field"><label>Email</label><input id="cl-email" oninput="render()" value="k.benali@globex.ma"/></div>
+          <div class="field"><label>ICE</label><input id="cl-ice" oninput="render()" value="009876543000018"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ITEMS TAB -->
+    <div id="tab-items" style="display:none">
+      <div class="section">
+        <div class="section-title">Invoice details</div>
+        <div class="row2">
+          <div class="field"><label>Invoice no.</label><input id="inv-num" oninput="render()" value="FAC-2026-0042"/></div>
+          <div class="field"><label>Date</label><input id="inv-date" type="date" oninput="render()" value="2026-05-02"/></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Due date</label><input id="inv-due" type="date" oninput="render()" value="2026-06-02"/></div>
+          <div class="field"><label>Currency</label>
+            <select id="inv-cur" onchange="render()">
+              <option value="MAD">MAD — Dirham</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="USD">USD — Dollar</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Status</label>
+          <select id="inv-status" onchange="render()">
+            <option value="draft">Brouillon</option>
+            <option value="sent">Envoyée</option>
+            <option value="paid">Payée</option>
+            <option value="overdue">En retard</option>
+          </select>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Line items</div>
+        <table class="items-table">
+          <thead><tr>
+            <th style="width:38%">Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>VAT%</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="items-body"></tbody>
+        </table>
+        <button class="btn btn-sm" onclick="addItem()">+ Add item</button>
+      </div>
+      <div class="section">
+        <div class="section-title">Notes & payment terms</div>
+        <textarea id="inv-notes" oninput="render()">Paiement à 30 jours. Tout retard entraîne des pénalités de 1,5% par mois.</textarea>
+      </div>
+    </div>
+
+    <!-- STYLE TAB -->
+    <div id="tab-style" style="display:none">
+      <div class="section">
+        <div class="section-title">Accent color</div>
+        <div class="color-opts" id="color-opts"></div>
+        <div class="field" style="margin-top:.5rem">
+          <label>Custom color</label>
+          <input type="color" id="custom-color" value="#185FA5" onchange="setCustomColor(this.value)" style="width:60px;height:32px;padding:2px;cursor:pointer"/>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Language</div>
+        <select id="inv-lang" onchange="render()">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+          <option value="ar">العربية</option>
+        </select>
+      </div>
+      <div class="section">
+        <div class="section-title">Font style</div>
+        <select id="inv-font" onchange="render()">
+          <option value="sans">'Segoe UI', system-ui, sans-serif</option>
+          <option value="serif">Georgia, 'Times New Roman', serif</option>
+          <option value="mono">'Courier New', Courier, monospace</option>
+        </select>
+      </div>
+      <div class="section">
+        <div class="section-title">Default VAT %</div>
+        <input id="default-vat" type="number" value="20" style="width:80px" oninput="render()"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN PREVIEW -->
+  <div class="main">
+    <div class="top-bar">
+      <span style="font-size:13px;color:#888">Live preview — all changes update instantly</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="downloadHTML()">Download HTML</button>
+        <button class="btn btn-sm btn-primary" onclick="window.print()">Print / Export PDF</button>
+      </div>
+    </div>
+    <div id="invoice-preview"></div>
+  </div>
+</div>
+
+<script>
+const COLORS = {
+  blue: '#185FA5', teal: '#0F6E56', coral: '#993C1D',
+  purple: '#534AB7', amber: '#854F0B', pink: '#993556', slate: '#444441'
+};
+const FONTS = {
+  sans: "'Segoe UI',system-ui,sans-serif",
+  serif: "Georgia,'Times New Roman',serif",
+  mono: "'Courier New',Courier,monospace"
+};
+const LABELS = {
+  fr: {
+    invoice:'FACTURE', to:'Facturer à', num:'N° facture', date:'Date', due:'Échéance',
+    desc:'Description', qty:'Qté', unit:'Prix unitaire', vat:'TVA', ht:'Montant HT',
+    subtotal:'Sous-total HT', vatamt:'TVA', total:'Total TTC', notes:'Notes & conditions',
+    status: { draft:'Brouillon', sent:'Envoyée', paid:'Payée', overdue:'En retard' }
+  },
+  en: {
+    invoice:'INVOICE', to:'Bill to', num:'Invoice no.', date:'Date', due:'Due date',
+    desc:'Description', qty:'Qty', unit:'Unit price', vat:'VAT', ht:'Amount',
+    subtotal:'Subtotal', vatamt:'VAT', total:'Total', notes:'Notes',
+    status: { draft:'Draft', sent:'Sent', paid:'Paid', overdue:'Overdue' }
+  },
+  ar: {
+    invoice:'فاتورة', to:'إلى', num:'رقم الفاتورة', date:'التاريخ', due:'الاستحقاق',
+    desc:'الوصف', qty:'الكمية', unit:'سعر الوحدة', vat:'TVA', ht:'المبلغ',
+    subtotal:'المجموع', vatamt:'الضريبة', total:'الإجمالي', notes:'ملاحظات',
+    status: { draft:'مسودة', sent:'مرسلة', paid:'مدفوعة', overdue:'متأخرة' }
+  }
+};
+
+let accent = '#185FA5';
+let logoDataUrl = '';
+let letterhead = 'classic';
+let items = [
+  { desc: 'Développement site web (forfait)', qty: 1, price: 15000, vat: 20 },
+  { desc: 'Design UI/UX — 10 écrans',          qty: 1, price: 8000,  vat: 20 },
+  { desc: 'Hébergement serveur (12 mois)',      qty: 1, price: 3600,  vat: 20 },
+];
+
+function switchTab(name, el) {
+  ['logo','company','client','items','style'].forEach(t => {
+    const e = document.getElementById('tab-' + t);
+    if (e) e.style.display = 'none';
+  });
+  const t = document.getElementById('tab-' + name);
+  if (t) t.style.display = '';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function handleLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    logoDataUrl = e.target.result;
+    const zone = document.getElementById('upload-zone');
+    zone.innerHTML = `<div class="logo-preview-wrap">
+      <img src="${logoDataUrl}" alt="logo"/>
+      <button class="remove-logo" onclick="removeLogo(event)">✕</button>
+    </div>
+    <p style="font-size:11px;color:#aaa;margin-top:6px">Click to change logo</p>`;
+    render();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo(e) {
+  e.stopPropagation();
+  logoDataUrl = '';
+  document.getElementById('upload-zone').innerHTML = `<div id="logo-display">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="margin:0 auto 4px;display:block"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity=".5"/></svg>
+    <p>Click to upload your logo</p>
+    <p style="font-size:11px;margin-top:2px">PNG, JPG, SVG — max 400×120px recommended</p>
+  </div>`;
+  render();
+}
+
+function selectLH(name, el) {
+  letterhead = name;
+  document.querySelectorAll('.lh-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  render();
+}
+
+function buildColorOpts() {
+  const c = document.getElementById('color-opts');
+  if (!c) return;
+  c.innerHTML = '';
+  Object.entries(COLORS).forEach(([, hex]) => {
+    const d = document.createElement('div');
+    d.className = 'color-dot' + (hex === accent ? ' selected' : '');
+    d.style.background = hex;
+    d.onclick = () => { accent = hex; buildColorOpts(); updateLHPreviews(); render(); };
+    c.appendChild(d);
+  });
+}
+
+function setCustomColor(val) {
+  accent = val;
+  buildColorOpts();
+  updateLHPreviews();
+  render();
+}
+
+function updateLHPreviews() {
+  const b = document.getElementById('lh-prev-banner');
+  if (b) b.style.background = accent;
+  const s = document.getElementById('lh-prev-sidebar');
+  if (s) s.style.background = accent;
+}
+
+function fmt(n) {
+  const cur = document.getElementById('inv-cur')?.value || 'MAD';
+  return new Intl.NumberFormat('fr-MA', { style: 'currency', currency: cur, minimumFractionDigits: 2 }).format(n);
+}
+function fmtDate(v) {
+  if (!v) return '';
+  const [y, m, d] = v.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function renderItemsTable() {
+  const tbody = document.getElementById('items-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  items.forEach((it, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${it.desc.replace(/"/g,'&quot;')}" oninput="items[${i}].desc=this.value;render()"/></td>
+      <td><input type="number" value="${it.qty}" min="0" style="width:46px" oninput="items[${i}].qty=+this.value;render()"/></td>
+      <td><input type="number" value="${it.price}" min="0" style="width:74px" oninput="items[${i}].price=+this.value;render()"/></td>
+      <td><input type="number" value="${it.vat}" min="0" style="width:46px" oninput="items[${i}].vat=+this.value;render()"/></td>
+      <td><button class="btn btn-sm btn-danger" onclick="removeItem(${i})">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function addItem() {
+  const dv = parseInt(document.getElementById('default-vat')?.value) || 20;
+  items.push({ desc: '', qty: 1, price: 0, vat: dv });
+  renderItemsTable();
+  render();
+}
+
+function removeItem(i) {
+  items.splice(i, 1);
+  renderItemsTable();
+  render();
+}
+
+function buildHeader(L, vals, font) {
+  const { cName, cAddr, cEmail, cPhone, cWeb, cIce, cTagline } = vals;
+  const logoImg = logoDataUrl
+    ? `<img src="${logoDataUrl}" alt="logo" style="max-height:56px;max-width:180px;display:block;object-fit:contain"/>`
+    : '';
+  const nameBlock = `
+    <div style="font-size:22px;font-weight:500;color:${accent};font-family:${font}">${cName}</div>
+    ${cTagline ? `<div style="font-size:12px;color:#aaa;margin-top:2px">${cTagline}</div>` : ''}`;
+  const logoOrName = logoDataUrl ? logoImg : nameBlock;
+  const contactInfo = `${cAddr.replace(/\n/g,'<br>')}${cEmail ? `<br>${cEmail}` : ''}${cPhone ? ` · ${cPhone}` : ''}${cWeb ? `<br>${cWeb}` : ''}${cIce ? `<br><span style="font-size:11px;color:#bbb">ICE : ${cIce}</span>` : ''}`;
+
+  if (letterhead === 'banner') {
+    return `<div style="background:${accent};padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        ${logoDataUrl
+          ? `<img src="${logoDataUrl}" alt="logo" style="max-height:48px;max-width:160px;display:block;filter:brightness(0) invert(1)"/>`
+          : `<div style="font-size:22px;font-weight:500;color:#fff;font-family:${font}">${cName}</div>${cTagline ? `<div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">${cTagline}</div>` : ''}`}
+      </div>
+      <div style="text-align:right;font-size:11px;color:rgba(255,255,255,.8);line-height:1.8">
+        ${contactInfo.replace(/<span[^>]*>|<\/span>/g,'')}
+      </div>
+    </div>
+    <div style="padding:1.5rem 2rem 0">`;
+  }
+
+  if (letterhead === 'centered') {
+    return `<div style="padding:2rem 2rem 1.5rem;text-align:center;border-bottom:1px solid #eee">
+      ${logoDataUrl ? `<div style="margin-bottom:8px;display:flex;justify-content:center">${logoImg}</div>` : ''}
+      <div style="font-size:20px;font-weight:500;color:${accent};font-family:${font}">${cName}</div>
+      ${cTagline ? `<div style="font-size:12px;color:#aaa;margin:2px 0 8px">${cTagline}</div>` : '<div style="margin:4px 0 8px"></div>'}
+      <div style="font-size:12px;color:#888;line-height:1.7">
+        ${cAddr.replace(/\n/g,' · ')}${cEmail ? ' · '+cEmail : ''}${cPhone ? ' · '+cPhone : ''}${cWeb ? ' · '+cWeb : ''}
+      </div>
+    </div>
+    <div style="padding:1.5rem 2rem 0">`;
+  }
+
+  if (letterhead === 'sidebar') {
+    return `<div style="display:flex">
+      <div style="background:${accent};width:6px;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="padding:1.5rem 2rem 1rem;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #eee">
+          <div>
+            ${logoOrName}
+            ${logoDataUrl ? `<div style="margin-top:6px">${nameBlock}</div>` : ''}
+          </div>
+          <div style="text-align:right;font-size:12px;color:#777;line-height:1.7">${contactInfo}</div>
+        </div>
+        <div style="padding:1.5rem 2rem 0">`;
+  }
+
+  // Classic (default)
+  return `<div style="padding:2rem 2rem 0">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #eee">
+      <div>
+        ${logoOrName}
+        ${logoDataUrl ? `<div style="margin-top:8px">${nameBlock}</div>` : ''}
+        <div style="font-size:12px;color:#777;line-height:1.7;margin-top:8px">${contactInfo}</div>
+      </div>
+      <div></div>
+    </div>
+    <div>`;
+}
+
+function closeHeader() {
+  if (letterhead === 'sidebar') return '</div></div></div>';
+  return '</div>';
+}
+
+function render() {
+  const lang = document.getElementById('inv-lang')?.value || 'fr';
+  const L = LABELS[lang] || LABELS.fr;
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const fontKey = document.getElementById('inv-font')?.value || 'sans';
+  const font = FONTS[fontKey];
+
+  const vals = {
+    cName:    document.getElementById('c-name')?.value || '',
+    cAddr:    document.getElementById('c-addr')?.value || '',
+    cIce:     document.getElementById('c-ice')?.value || '',
+    cEmail:   document.getElementById('c-email')?.value || '',
+    cPhone:   document.getElementById('c-phone')?.value || '',
+    cWeb:     document.getElementById('c-web')?.value || '',
+    cBank:    document.getElementById('c-bank')?.value || '',
+    cTagline: document.getElementById('c-tagline')?.value || '',
+    clName:   document.getElementById('cl-name')?.value || '',
+    clContact:document.getElementById('cl-contact')?.value || '',
+    clAddr:   (document.getElementById('cl-addr')?.value || '').replace(/\n/g,'<br>'),
+    clEmail:  document.getElementById('cl-email')?.value || '',
+    clIce:    document.getElementById('cl-ice')?.value || '',
+    invNum:   document.getElementById('inv-num')?.value || '',
+    invDate:  fmtDate(document.getElementById('inv-date')?.value || ''),
+    invDue:   fmtDate(document.getElementById('inv-due')?.value || ''),
+    status:   document.getElementById('inv-status')?.value || 'draft',
+    notes:    document.getElementById('inv-notes')?.value || '',
+  };
+
+  const badgeColors = {
+    draft:   ['#D3D1C7','#444441'],
+    sent:    ['#B5D4F4','#0C447C'],
+    paid:    ['#C0DD97','#27500A'],
+    overdue: ['#F7C1C1','#791F1F']
+  };
+  const [badgeBg, badgeTxt] = badgeColors[vals.status] || badgeColors.draft;
+
+  let subtotalHT = 0, totalVAT = 0;
+  const rows = items.map(it => {
+    const ht = it.qty * it.price;
+    const vatAmt = ht * (it.vat / 100);
+    subtotalHT += ht;
+    totalVAT += vatAmt;
+    return `<tr>
+      <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px;font-family:${font}">${it.desc}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px;text-align:right">${it.qty}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px;text-align:right">${fmt(it.price)}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px;text-align:right">${it.vat}%</td>
+      <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px;text-align:right">${fmt(ht)}</td>
+    </tr>`;
+  }).join('');
+  const total = subtotalHT + totalVAT;
+
+  const headerHTML = buildHeader(L, vals, font);
+  const closeHTML  = closeHeader();
+
+  document.getElementById('invoice-preview').innerHTML = `
+  <div class="invoice-paper" dir="${dir}" style="font-family:${font}">
+    ${headerHTML}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem">
+        <div>
+          <div style="font-size:11px;color:#aaa;font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">${L.to}</div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:2px">${vals.clName}</div>
+          <div style="font-size:12px;color:#777;line-height:1.7">
+            ${vals.clContact}<br>${vals.clAddr}
+            ${vals.clEmail ? `<br>${vals.clEmail}` : ''}
+            ${vals.clIce   ? `<br>ICE : ${vals.clIce}` : ''}
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:26px;font-weight:500;letter-spacing:-.03em;color:#111;margin-bottom:4px">${L.invoice}</div>
+          <div style="font-size:14px;color:#888;margin-bottom:10px">${vals.invNum}</div>
+          <span style="display:inline-flex;font-size:11px;font-weight:500;padding:3px 12px;border-radius:99px;background:${badgeBg};color:${badgeTxt}">${L.status[vals.status]}</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;padding:1rem;background:#f8f8f5;border-radius:8px">
+        <div><div style="font-size:11px;color:#aaa;margin-bottom:3px">${L.num}</div><div style="font-size:13px;font-weight:500">${vals.invNum}</div></div>
+        <div><div style="font-size:11px;color:#aaa;margin-bottom:3px">${L.date}</div><div style="font-size:13px;font-weight:500">${vals.invDate}</div></div>
+        <div><div style="font-size:11px;color:#aaa;margin-bottom:3px">${L.due}</div><div style="font-size:13px;font-weight:500;color:${vals.status==='overdue'?'#A32D2D':'#111'}">${vals.invDue}</div></div>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem">
+        <thead><tr>
+          <th style="font-size:12px;font-weight:500;color:#999;text-align:left;padding:8px 0;border-bottom:1px solid #e5e5e5">${L.desc}</th>
+          <th style="font-size:12px;font-weight:500;color:#999;text-align:right;padding:8px 0;border-bottom:1px solid #e5e5e5">${L.qty}</th>
+          <th style="font-size:12px;font-weight:500;color:#999;text-align:right;padding:8px 0;border-bottom:1px solid #e5e5e5">${L.unit}</th>
+          <th style="font-size:12px;font-weight:500;color:#999;text-align:right;padding:8px 0;border-bottom:1px solid #e5e5e5">${L.vat}</th>
+          <th style="font-size:12px;font-weight:500;color:#999;text-align:right;padding:8px 0;border-bottom:1px solid #e5e5e5">${L.ht}</th>
+        </tr></thead>
+        <tbody>${rows || `<tr><td colspan="5" style="padding:1rem 0;font-size:13px;color:#aaa">No items added yet.</td></tr>`}</tbody>
+      </table>
+
+      <div style="display:flex;justify-content:flex-end;margin-bottom:1.5rem">
+        <div style="width:270px">
+          <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#777"><span>${L.subtotal}</span><span>${fmt(subtotalHT)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#777"><span>${L.vatamt}</span><span>${fmt(totalVAT)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:16px;font-weight:500;color:#111;border-top:1px solid #ccc;margin-top:6px">
+            <span>${L.total}</span><span style="color:${accent}">${fmt(total)}</span>
+          </div>
+        </div>
+      </div>
+
+      ${vals.notes || vals.cBank ? `
+      <div style="padding-top:1rem;border-top:1px solid #eee">
+        ${vals.notes ? `<div style="font-size:12px;color:#888;margin-bottom:8px"><strong style="color:#555;font-size:12px">${L.notes}</strong><br>${vals.notes}</div>` : ''}
+        ${vals.cBank ? `<div style="font-size:11px;color:#bbb">RIB / IBAN : ${vals.cBank}</div>` : ''}
+      </div>` : ''}
+    ${closeHTML}
+  </div>`;
+}
+
+function downloadHTML() {
+  const invoiceHTML = document.getElementById('invoice-preview').innerHTML;
+  const fullHTML = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Facture</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0efe9;padding:2rem}
+.invoice-paper{background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;max-width:740px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+@media print{body{background:#fff;padding:0}.invoice-paper{border:none;box-shadow:none;border-radius:0;max-width:100%}@page{margin:1cm;size:A4}}
+</style>
+</head>
+<body>${invoiceHTML}</body>
+</html>`;
+  const blob = new Blob([fullHTML], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `invoice-${document.getElementById('inv-num')?.value || 'export'}.html`;
+  a.click();
+}
+
+// Init
+buildColorOpts();
+updateLHPreviews();
+renderItemsTable();
+render();
+</script>
 </body>
 </html>
